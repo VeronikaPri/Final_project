@@ -1,0 +1,159 @@
+body {
+      background-image: url("background.JPG");
+     }
+#form_body {
+    background-image: url("background2.JPG");
+}
+       input[type=text], select {
+        width: 100%;
+        padding: 12px 20px;
+        margin: 8px 0px;
+        display: inline-block;
+        border: 2px;
+        border-radius: 4px;
+        box-sizing: border-box;
+             }
+        input[type=number] {
+            width: 100%;
+            padding: 12px 20px;
+            margin: 8px 0px;
+            display: inline-block;
+            border: 2px;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        input[type="submit"] {
+            width: 35%;
+            background-color: purple;
+            color: #e9e3ff;
+            padding: 15px 8px;
+            margin-left: 450px;
+            margin-right: 450px;
+            text-align: center;
+            border: 2px purple;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        input[type="submit"]:hover {
+            background-color: purple;
+        }
+
+		div {
+             border-radius: 5px;
+             border: 2px double black;
+             background-color: #e9e3ff;
+             padding: 20px;
+             margin: 10px;
+             font-family: "Century Gothic", CenturyGothic, AppleGothic, sans-serif;;
+            }
+        #instruction {
+            border-radius: 5px;
+            border: #e9e3ff;
+            background-color: mediumpurple;
+            color: white;
+            padding: 20px;
+            margin: 10px;
+            font-family: "Century Gothic", CenturyGothic, AppleGothic, sans-serif;
+        }
+        h1 {
+            font-family: fantasy;
+            color: purple;
+            background-color: #e2daf1;
+            border: 4px solid black;
+            border-radius: 5px;
+            width: 300px;
+        }
+        h2 {
+            font-family: fantasy;
+            font-weight: lighter;
+            color: black;
+        }
+        #nav {
+              background-color: #e9e3ff;
+              border: 5px solid purple;
+              width: 200px;
+              padding: 50px;
+              margin: 20px;
+             }
+        ul {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+            width: 300px;
+            background-color: #e2daf1;
+            border: 4px solid black
+        }
+        li a {
+            display: block;
+            color: #000;
+            padding: 8px 16px;
+            text-decoration: none;
+            font-family: cursive;
+        }
+        li a:hover {
+            background-color: purple;
+            color: white;
+        }
+        #answers {
+            width: 100%;
+        }
+        td {
+            text-align: center;
+        }
+        #stimulus {
+            border-radius: 2px;
+            background-color: blanchedalmond;
+            padding: 10px;
+            font-family: "Century Gothic", CenturyGothic, AppleGothic, sans-serif;
+        }
+        #question {
+            background-color: #e2daf1;
+            border: rebeccapurple dotted 2px;
+            padding: 10px;
+            margin: 10px;
+        }
+        #form_quest {
+            font-family: "Century Gothic", CenturyGothic, AppleGothic, sans-serif;
+            color: purple;
+            background-color: #e2daf1;
+            border: 4px solid black;
+            width: 600px;
+        }
+        #questions {
+             border-radius: 5px;
+             border: 2px double black;
+             background-image: url("background4.jpg");
+             padding: 20px;
+             margin: 10px;
+             font-family: "Century Gothic", CenturyGothic, AppleGothic, sans-serif;
+        }
+        img {
+            border: black solid 3px;
+            border-radius: 5px;
+        }
+        p {
+            text-align: center;
+        }
+
+        a {
+           font-family: "Century Gothic", CenturyGothic, AppleGothic, sans-serif;
+        }
+        table, th, td {
+            border: 2px solid black;
+
+        }
+        th, td {
+            padding: 12px;
+            text-align: center;
+            font-family: "Century Gothic", CenturyGothic, AppleGothic, sans-serif;
+            background-color: #e9e3ff;
+        }
+        table {
+            background-color: mediumpurple;
+            padding: 8px;
+        }
+        #estimate {
+            background-image: url("background4.jpg");
+
+        }
