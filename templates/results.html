@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ru">
+    <head>
+        <meta charset="UTF-8">
+        <title>main</title>
+        <link rel="stylesheet" type="text/css" href="./static/style.css" />
+    </head>
+    <body>
+    <h1>Вот что удалось найти по вашему запросу: </h1>
+    <p> Самые частотные слова на промежутке с {{start_date}} по {{fin_date}} </p>
+    <table>
+        <h2>Посты</h2>
+        <p><img src={{em_post_url}} alt="oops! there should be a bar plot." width="800" height="500"></p>
+        {% for key, value in em_post %}
+        <tr>
+            <th>{{key}}</th>
+            <th>{{value}}</th>
+        </tr>
+        {% endfor %}
+    </table>
+    <p><img src={{w_post_url}} alt="oops! there should be a bar plot." width="800" height="500"></p>
+    <table>
+        {% for key, value in w_post %}
+        <tr>
+            <th>{{key}}</th>
+            <th>{{value}}</th>
+        </tr>
+        {% endfor %}
+    </table>
+    <p><img src={{em_com_url}} alt="oops! there should be a bar plot." width="800" height="500"></p>
+    <table>
+        <h2>Комментарии</h2>
+        {% for key, value in em_com %}
+        <tr>
+            <th>{{key}}</th>
+            <th>{{value}}</th>
+        </tr>
+        {% endfor %}
+    </table>
+    <p><img src={{w_com_url}} alt="oops! there should be a bar plot." width="800" height="500"></p>
+    <table>
+        {% for key, value in w_com %}
+        <tr>
+            <th>{{key}}</th>
+            <th>{{value}}</th>
+        </tr>
+        {% endfor %}
+    </table>
+    <a href="/">Попробовать другого пользователя</a>
+    <a href="/form1">Попробовать другой временной промежуток</a>
+    </body>
+</html>

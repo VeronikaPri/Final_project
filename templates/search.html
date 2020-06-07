@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ru">
+    <head>
+        <meta charset="UTF-8">
+        <title>main</title>
+        <link rel="stylesheet" type="text/css" href="./static/style.css" />
+    </head>
+    <style>
+        #s_i {
+        display:none;
+        }
+    </style>
+    <body>
+    <h1>Здесь Вы узнаете что-то интересное об id {{owner_id}}</h1>
+    <li>{{w}} {{owner_id}}</li>
+    <form action="/form1" method = 'GET'>
+    <div>
+        <h2>Выберите временной промежуток (если не хотите задавать время, чтобы посмотреть на все данные сразу,
+            оставьте поля с датами незаполненными):</h2>
+        <select id = s_i name="owner_id">
+            <option value={{owner_id}}></option>
+        </select>
+        Начальная дата постов
+        <input type="date" id="start_date" name="start_date">
+        Конечная дата постов
+        <input type="date" id="fin_date" name="fin_date">
+
+        <input type="submit" name="form" value="Поехали!">
+    </div>
+</form>
+    </body>
+</html>
