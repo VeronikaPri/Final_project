@@ -1,25 +1,27 @@
-from flask import Flask, render_template, request, redirect, url_for
-from matplotlib import pyplot
+import sqlalchemy
+from flask import Flask, render_template, request, redirect, url_for, session
 from pymorphy2 import MorphAnalyzer
-from nltk.corpus import stopwords
-from functions import search, get_dicts
+from functions import search, get_dicts, week_meta_graph, com_word_graph, author_meta
 from flask_sqlalchemy import SQLAlchemy
 import pandas as pd
-import psutil
-import base64
-import io
 import sys
-import plotly.express as px
-import matplotlib.pyplot as plt
-import seaborn as sns
-import matplotlib as mpl
-
-from nltk.tokenize import word_tokenize
-from emoji.unicode_codes import UNICODE_EMOJI
-from collections import Counter
 sys.path.append(r"C:\Users\Veronuka\AppData\Roaming\Python\Python38\site-packages")
 morph = MorphAnalyzer()
-sw = stopwords.words('russian')
+sw = ['и', 'в', 'во', 'не', 'что', 'он', 'на', 'я', 'с', 'со', 'как', 'а', 'то',
+           'все', 'она', 'так', 'его', 'но', 'да', 'ты', 'к', 'у', 'же', 'вы', 'за', 'бы',
+           'по', 'только', 'ее', 'мне', 'было', 'вот', 'от', 'меня', 'еще', 'нет', 'о',
+           'из', 'ему', 'теперь', 'когда', 'даже', 'ну', 'вдруг', 'ли', 'если', 'уже',
+           'или', 'ни', 'быть', 'был', 'него', 'до', 'вас', 'нибудь', 'опять', 'уж',
+           'вам', 'ведь', 'там', 'потом', 'себя', 'ничего', 'ей', 'может', 'они', 'тут',
+           'где', 'есть', 'надо', 'ней', 'для', 'мы', 'тебя', 'их', 'чем', 'была', 'сам',
+           'чтоб', 'без', 'будто', 'чего', 'раз', 'тоже', 'себе', 'под', 'будет', 'ж',
+           'тогда', 'кто', 'этот', 'того', 'потому', 'этого', 'какой', 'совсем', 'ним',
+           'здесь', 'этом', 'один', 'почти', 'мой', 'тем', 'чтобы', 'нее', 'сейчас',
+           'были', 'куда', 'зачем', 'всех', 'никогда', 'можно', 'при', 'наконец', 'два',
+           'об', 'другой', 'хоть', 'после', 'над', 'больше', 'тот', 'через', 'эти', 'нас',
+           'про', 'всего', 'них', 'какая', 'много', 'разве', 'три', 'эту', 'моя',
+           'впрочем', 'хорошо', 'свою', 'этой', 'перед', 'иногда', 'лучше', 'чуть', 'том',
+           'нельзя', 'такой', 'им', 'более', 'всегда', 'конечно', 'всю', 'между']
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -45,7 +47,7 @@ class Authors(db.Model):
 
 class Comments(db.Model):
     __tablename__ = 'comments'
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Text, primary_key=True)
     post_id = db.Column(db.Integer)
     author_id = db.Column(db.Integer)
     text = db.Column(db.Text)
@@ -58,7 +60,7 @@ class Comments(db.Model):
 
 class Posts(db.Model):
     __tablename__ = 'posts'
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Text, primary_key=True)
     author_id = db.Column(db.Integer)
     text = db.Column(db.Text)
     lem_text = db.Column(db.Text)
@@ -78,110 +80,118 @@ def index():
 def answer_process():
     if not request.args:
         return redirect(url_for('index'))
-    user_type = request.args.get('user_type')
-    id_type = request.args.get('id_type')
     some_id = request.args.get('some_id')
-    if user_type and id_type and some_id:
+    if some_id:
         owner_list = []
         owner_stats = db.session.query(Posts.wall_owner).all()
-        w = 'owner_stats'
         for item in owner_stats:
             owner_list.append(str(item[0]))
         if str(some_id) in owner_list:
             w = 'Информация об этом пользователе уже есть.'
             return render_template('search.html', owner_id=some_id, w=w)
         else:
-            all_comments, all_posts, all_authors = search(user_type, id_type, some_id)
-            com_df = pd.DataFrame(all_comments)
-            post_df = pd.DataFrame(all_posts)
-            auth_df = pd.DataFrame(all_authors)
-            # posts
-            for index, row in post_df.iterrows():
-                id = row['id']
-                author_id = row['user_id']
-                text = row['text']
-                lem_text = row['lem_text']
-                likes = row['likes']
-                date_time = row['date_time']
-                weekday = row['weekday']
-                wall_owner = row['wall_owner']
-                post = Posts(
-                    id=id,
-                    author_id=author_id,
-                    text=text,
-                    lem_text=lem_text,
-                    likes=likes,
-                    date_time=date_time,
-                    weekday=weekday,
-                    wall_owner=wall_owner
-                )
-                db.session.add(post)
-                db.session.commit()
-                db.session.refresh(post)
-            # comments
-            for index, row in com_df.iterrows():
-                id = row['id']
-                post_id = row['post_id']
-                author_id = row['author_id']
-                text = row['text']
-                lem_text = row['lem_text']
-                likes = row['likes']
-                date_time = row['date_time']
-                weekday = row['weekday']
-                wall_owner = row['wall_owner']
-                comment = Comments(
-                    id=id,
-                    post_id=post_id,
-                    author_id=author_id,
-                    text=text,
-                    lem_text=lem_text,
-                    likes=likes,
-                    date_time=date_time,
-                    weekday=weekday,
-                    wall_owner=wall_owner
-                )
-                db.session.add(comment)
-                db.session.commit()
-                db.session.refresh(comment)
-            # authors
-            author_base = []
-            author_stats = db.session.query(Authors.id).all()
-            for item in author_stats:
-                author_base.append(item[0])
-            for index, row in auth_df.iterrows():
-                if row['id'] not in author_base:
+            info = search(some_id)
+            if len(info) == 2:
+                return render_template(info[0], message=info[1])
+            else:
+                all_comments, all_posts, all_authors = info[0], info[1], info[2]
+                com_df = pd.DataFrame(all_comments)
+                post_df = pd.DataFrame(all_posts)
+                auth_df = pd.DataFrame(all_authors)
+                # posts
+                for index, row in post_df.iterrows():
                     id = row['id']
-                    sex = row['sex']
-                    bdate = row['bdate']
-                    day = row['day']
-                    month = row['month']
-                    year = row['year']
-                    city = row['city']
-                    faculty = row['faculty']
-                    books = row['books']
-                    interests = row['interests']
-                    home_town = row['home_town']
-                    career = row['career']
-                    author = Authors(
+                    author_id = row['user_id']
+                    text = row['text']
+                    lem_text = row['lem_text']
+                    likes = row['likes']
+                    date_time = row['date_time']
+                    weekday = row['weekday']
+                    wall_owner = row['wall_owner']
+                    post = Posts(
                         id=id,
-                        sex=sex,
-                        bdate=bdate,
-                        day=day,
-                        month=month,
-                        year=year,
-                        city=city,
-                        faculty=faculty,
-                        books=books,
-                        interests=interests,
-                        home_town=home_town,
-                        career=career
+                        author_id=author_id,
+                        text=text,
+                        lem_text=lem_text,
+                        likes=likes,
+                        date_time=date_time,
+                        weekday=weekday,
+                        wall_owner=wall_owner
                     )
-                    db.session.add(author)
-                    db.session.commit()
-                    db.session.refresh(author)
-            # db.session.commit()
-            w = 'Информация скачана!'
-        return render_template('search.html', owner_id=some_id, w=w)
+                    try:
+                        db.session.add(post)
+                        db.session.commit()
+                        db.session.refresh(post)
+                    except sqlalchemy.exc.InvalidRequestError:
+                        db.session.rollback()
+                # comments
+                for index, row in com_df.iterrows():
+                    id = row['id']
+                    post_id = row['post_id']
+                    author_id = row['author_id']
+                    text = row['text']
+                    lem_text = row['lem_text']
+                    likes = row['likes']
+                    date_time = row['date_time']
+                    weekday = row['weekday']
+                    wall_owner = row['wall_owner']
+                    comment = Comments(
+                        id=id,
+                        post_id=post_id,
+                        author_id=author_id,
+                        text=text,
+                        lem_text=lem_text,
+                        likes=likes,
+                        date_time=date_time,
+                        weekday=weekday,
+                        wall_owner=wall_owner
+                    )
+                    try:
+                        db.session.add(comment)
+                        db.session.commit()
+                        db.session.refresh(comment)
+                    except:
+                        pass
+                # authors
+                author_base = []
+                author_stats = db.session.query(Authors.id).all()
+                for item in author_stats:
+                    author_base.append(str(item[0]))
+                for index, row in auth_df.iterrows():
+                    if str(row['id']) not in author_base:
+                        id = row['id']
+                        sex = row['sex']
+                        bdate = row['bdate']
+                        day = row['day']
+                        month = row['month']
+                        year = row['year']
+                        city = row['city']
+                        faculty = row['faculty']
+                        books = row['books']
+                        interests = row['interests']
+                        home_town = row['home_town']
+                        career = row['career']
+                        author = Authors(
+                            id=id,
+                            sex=sex,
+                            bdate=bdate,
+                            day=day,
+                            month=month,
+                            year=year,
+                            city=city,
+                            faculty=faculty,
+                            books=books,
+                            interests=interests,
+                            home_town=home_town,
+                            career=career
+                        )
+                        db.session.add(author)
+                        db.session.commit()
+                        db.session.refresh(author)
+                # db.session.commit()
+                w = 'Информация скачана!'
+        return render_template('search.html', owner_id=some_id, w=w, all_comments=all_comments, all_posts=all_posts,
+                               all_authors=all_authors, info= info)
     else:
         return redirect(url_for('answer_process'))
 
@@ -207,20 +217,27 @@ def date_selection():
     em_post, w_post, em_com, w_com, auth_w_d, post_avg_like, post_weeks, com_avg_like, com_weeks = com_words(some_id,
                                                                                                              start_date,
                                                                                                              fin_date)
-    week_url = week_meta_graph(post_weeks, com_weeks)
 
+    week_url = week_meta_graph(post_weeks, com_weeks)
     em_post_url, em_post_words = com_word_graph(em_post, 'Эмоджи в постах', 'Эмоджи')
     w_post_url, w_post_words = com_word_graph(w_post, 'Слова в постах', 'Слова')
     em_com_url, em_com_words = com_word_graph(em_com, 'Эмоджи в комментариях', 'Эмоджи')
     w_com_url, w_com_words = com_word_graph(w_com, 'Слова в комментариях', 'Слова')
     auth_info = db.session.query(Authors.sex, Authors.month,
-                                 Authors.city, Authors.faculty,
+                                 Authors.city,
                                  Authors.home_town).filter(Authors.id.in_(auth_w_d)).all()
-    sex_dict = []
+
+    sex_meta, month_meta, city_meta, h_t_meta = author_meta(auth_info)
+
+    if start_date == '':
+        start_date = '(не задано)'
+    if fin_date == '':
+        fin_date = '(не задано)'
     return render_template('results.html', some_id=some_id, start_date=start_date, fin_date=fin_date,
                            em_post_words=em_post_words, w_post_words=w_post_words, em_com_words=em_com_words,
                            w_com_words=w_com_words, em_post_url=em_post_url, w_post_url=w_post_url,
-                           em_com_url=em_com_url, w_com_url=w_com_url, week_url=week_url)
+                           em_com_url=em_com_url, w_com_url=w_com_url, week_url=week_url, sex_meta=sex_meta,
+                           month_meta=month_meta, city_meta=city_meta, h_t_meta=h_t_meta)
 
 
 def com_words(owner_id, start_date, fin_date):
@@ -269,55 +286,16 @@ def com_words(owner_id, start_date, fin_date):
                                         Comments.likes,
                                         Comments.weekday,
                                         Comments.author_id).filter(Comments.wall_owner == owner_id).all()
-
-    em_post, w_post, auth_w_d, post_avg_like, post_weeks = get_dicts(to_date_posts, auth_w_d)
-    em_com, w_com, auth_w_d, com_avg_like, com_weeks = get_dicts(to_date_coms, auth_w_d)
+    if to_date_posts:
+        em_post, w_post, auth_w_d, post_avg_like, post_weeks = get_dicts(to_date_posts, auth_w_d)
+    else:
+        em_post = w_post = auth_w_d = post_avg_like = post_weeks = None
+    if to_date_coms:
+        em_com, w_com, auth_w_d, com_avg_like, com_weeks = get_dicts(to_date_coms, auth_w_d)
+    else:
+        em_com = w_com = com_avg_like = com_weeks = None
     return em_post, w_post, em_com, w_com, auth_w_d, post_avg_like, post_weeks, com_avg_like, com_weeks
 
-
-def com_word_graph(com_dict, title, w_type):
-    img = io.BytesIO()
-    x = []
-    words = []
-    counts = []
-    for key, value in com_dict:
-        words.append(key)
-        counts.append(value)
-    num_words = len(counts)
-    for k in range(num_words):
-        x.append(k + 1)
-    plt.figure(figsize=(15, 10))
-    plt.bar(x, counts, color='purple')
-    plt.xticks(ticks=x, labels=words)
-    plt.title(title)
-    plt.ylabel('Кол-во употреблений')
-    plt.xlabel(w_type)
-    plt.savefig(img, format='png')
-    img.seek(0)
-    graph_url = base64.b64encode(img.getvalue()).decode()
-    plt.close()
-    return 'data:image/png;base64,{}'.format(graph_url), words
-
-
-def week_meta_graph(post_week, com_week):
-    img = io.BytesIO()
-    whole_dict = []
-    for key in dict(post_week).keys():
-        whole_dict.append({'weekday': key, 'type': 'post', 'count': dict(post_week)[key]})
-    for key in dict(com_week).keys():
-        whole_dict.append({'weekday': key, 'type': 'comment', 'count': dict(com_week)[key]})
-    whole_db = pd.DataFrame(whole_dict)
-    plt.figure(figsize=(15, 10))
-    sns.barplot(x='weekday', y='count', hue='type', order=['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                    data=whole_db, palette='Purples')
-    plt.title('День недели и кол-во записей')
-    plt.ylabel('Кол-во запсисей')
-    plt.xlabel('День недели')
-    plt.savefig(img, format='png')
-    img.seek(0)
-    graph_url = base64.b64encode(img.getvalue()).decode()
-    plt.close()
-    return 'data:image/png;base64,{}'.format(graph_url)
 
 @app.route('/back_to_form1', methods=['get'])
 def back():
