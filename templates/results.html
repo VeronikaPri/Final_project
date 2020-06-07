@@ -6,70 +6,81 @@
         <link rel="stylesheet" type="text/css" href="./static/style.css" />
     </head>
     <style>
+        a.button {
+        -webkit-appearance: button;
+        -moz-appearance: button;
+        appearance: button;
+            text-decoration: none;
+            color: initial;
+            text-align: center;
+}
         #s_i {
         display:none;
         }
+        .thumb img  {
+    border: 2px solid #3c1d7f; /* Рамка вокруг фотографии */
+    padding: 15px; /* Расстояние от картинки до рамки */
+    background: #c5b6f5; /* Цвет фона */
+    margin-right: 10px; /* Отступ справа */
+    margin-bottom: 10px; /* Отступ снизу */
+   }
     </style>
     <body  id="form_body">
-    <h1>Вот что удалось найти по вашему запросу: </h1>
-    <h2>Немного общей информации о юзере {{some_id}}:</h2>
-    <table>
-        <tr>
-                <th></th>
-                <th></th>
-                <th></th>
-            </tr>
-            <tr>
-                <td></td>
-                <td></td>
-                <td></td>
-            </tr>
-    </table>
-        <p><img src={{week_url}} alt="oops! there should be a bar plot."></p>
-    <p> Самые частотные слова на промежутке с {{start_date}} по {{fin_date}} </p>
-    <table>
-        <h2>Посты</h2>
-        <p><img src={{em_post_url}} alt="oops! there should be a bar plot."></p>
+    <h1>Вот что удалось найти по вашему запросу на промежутке с {{start_date}} по {{fin_date}}: </h1>
+    <h2>Немного информации об авторах:</h2>
+    <p class="thumb">
+    <img src={{sex_meta}} alt="oops! there should be a pie plot.">
+    <img src={{month_meta}} alt="oops! there should be a pie plot.">
+    <img src={{city_meta}} alt="oops! there should be a bar plot.">
+    <img src={{h_t_meta}} alt="oops! there should be a bar plot.">
+  </p>
+
+    <h2>Когда писали чаще?</h2>
+    <p><img src={{week_url}} alt="no information on this user"></p>
+    <h2> Самые частотные слова на промежутке с {{start_date}} по {{fin_date}} </h2>
+    <h3>Посты</h3>
+    <p><img src={{em_post_url}} alt="no information on this user"></p>
+    <table align="center">
         <tr>
         {% for w in em_post_words %}
         <th>{{w}}</th>
         {% endfor %}
         </tr>
     </table>
-    <p><img src={{w_post_url}} alt="oops! there should be a bar plot."></p>
-    <table>
+    <p><img src={{w_post_url}} alt="no information on this user"></p>
+    <table align="center">
         <tr>
         {% for w in w_post_words %}
         <th>{{w}}</th>
         {% endfor %}
         </tr>
     </table>
-    <h2>Комментарии</h2>
-    <p><img src={{em_com_url}} alt="oops! there should be a bar plot."></p>
-    <table>
+    <h3>Комментарии</h3>
+    <p><img src={{em_com_url}} alt="no information on this user"></p>
+    <table align="center">
         <tr>
         {% for w in em_com_words %}
         <th>{{w}}</th>
         {% endfor %}
         </tr>
     </table>
-    <p><img src={{w_com_url}} alt="oops! there should be a bar plot."></p>
-    <table>
+    <p><img src={{w_com_url}} alt="no information on this user"></p>
+    <table align="center">
         <tr>
         {% for w in w_com_words %}
         <th>{{w}}</th>
         {% endfor %}
         </tr>
     </table>
-    <form action="/back_to_form1" method = 'GET'>
     <div>
-        <select id = s_i name="some_id">
-            <option value={{some_id}}></option>
-        </select>
+        <form action="/back_to_form1" method = 'GET'>
+            <select id = s_i name="some_id">
+                <option value={{some_id}}></option>
+            </select>
         <input type="submit" name="form" value="Посмотреть другой временной промежуток!">
+        </form>
+        <a href="/" class="button">Попробовать другого пользователя</a>
     </div>
-</form>
-    <a href="/">Попробовать другого пользователя</a>
-    <a href="/form1">Попробовать другой временной промежуток</a>
+
     </body>
 </html>

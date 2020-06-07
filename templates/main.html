@@ -5,14 +5,10 @@
         <title>main</title>
         <link rel="stylesheet" type="text/css" href="./static/style.css" />
     </head>
-    <style>
-        #form1 {
-        display:none;
-        }
-    </style>
     <script>
-        foo() {
-        $( "#form1" ).toggleClass( "show" );
+        function foo() {
+        alert("Пожалуйста, подождите. Мы ищем данные...");
+        return true;
         }
     </script>
     <body>
@@ -20,23 +16,13 @@
     <form action="/form" method = 'GET'>
     <div>
         <h2>О чем\ком Вы хотели бы узнать?</h2>
-        Сообщество или пользователь?
-        <select name="user_type">
-            <option value="group">Сообщество</option>
-            <option value="user">Пользователь</option>
-        </select>
-        Какой тип id Вы ввели? (Настоятельно рекоммендуем использовать числовой.
-        Его можно найти в ссылке, если открыть любую фотографию данного сообщества\пользователя)
-        <select name="id_type">
-            <option value="numeric">Числовой</option>
-            <option value="user">Пользователь</option>
-        </select>
-        Введите id этого сообщества\пользователя:
+        Введите id этого сообщества\пользователя(в виде цифры, с минусом для групп:
+        можно найти в ссылке на любую фотографию юзера):
         <input type="text" name="some_id" placeholder="japan_an1me или -86395110"><br>
         <input type="submit" name="form"  value="Найти что-нибудь интересное!" onclick="return foo()">
-        <div id="form1">
-            <li>Пожалуйста, будьте готовы немного подождать. Мы ищем информацию по вашему запросу.</li>
-            <p><img src="./static/cat_moving.gif" alt="please, wait!" width="200" height="244"></p>
+        <div id = estimate>
+            <p>Пожалуйста, будьте готовы немного подождать.</p>
+            <p><img src="./static/cat_moving.gif" alt="please, wait!" width="300" height="244"></p>
         </div>
     </div>
 </form>
