@@ -190,8 +190,7 @@ def answer_process():
                         db.session.refresh(author)
                 # db.session.commit()
                 w = 'Информация скачана!'
-        return render_template('search.html', owner_id=some_id, w=w, all_comments=all_comments, all_posts=all_posts,
-                               all_authors=all_authors, info= info)
+        return render_template('search.html', owner_id=some_id, w=w)
     else:
         return redirect(url_for('answer_process'))
 

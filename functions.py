@@ -141,6 +141,7 @@ def get_user_posts(user_id, offset, post_ids, author_ids, all_posts, comment_ids
                 if item.get('text') != '':
                     if item.get('id') not in post_ids:
                         post = {}
+                        org_id = item.get('id')
                         post['id'] = str(item.get('id')) + str(item.get('owner_id'))
                         post['user_id'] = item.get('owner_id')
                         if item.get('owner_id') not in author_ids:
@@ -164,7 +165,7 @@ def get_user_posts(user_id, offset, post_ids, author_ids, all_posts, comment_ids
                             off_x = -100
                             for i in range(offset_num):
                                 off_x += 100
-                                get_comments(user_id, post['id'], off_x, comment_ids, author_ids, all_comments)
+                                get_comments(user_id, org_id, off_x, comment_ids, author_ids, all_comments)
         return all_posts, all_comments, author_ids, post_ids, comment_ids
     else:
         return None
