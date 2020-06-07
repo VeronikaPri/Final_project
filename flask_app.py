@@ -1,4 +1,3 @@
-import sqlite3
 from flask import Flask, render_template, request, redirect, url_for
 from matplotlib import pyplot
 from pymorphy2 import MorphAnalyzer
@@ -10,7 +9,7 @@ import psutil
 import base64
 import io
 import sys
-sys.path.append(r"C:\Users\Veronuka\AppData\Roaming\Python\Python38\site-packages")
+import plotly.express as px
 import matplotlib.pyplot as plt
 import seaborn as sns
 import matplotlib as mpl
@@ -18,6 +17,7 @@ import matplotlib as mpl
 from nltk.tokenize import word_tokenize
 from emoji.unicode_codes import UNICODE_EMOJI
 from collections import Counter
+sys.path.append(r"C:\Users\Veronuka\AppData\Roaming\Python\Python38\site-packages")
 morph = MorphAnalyzer()
 sw = stopwords.words('russian')
 
@@ -181,7 +181,7 @@ def answer_process():
                     db.session.refresh(author)
             # db.session.commit()
             w = 'Информация скачана!'
-        return render_template('search.html', some_id=some_id, w=w)
+        return render_template('search.html', owner_id=some_id, w=w)
     else:
         return redirect(url_for('answer_process'))
 
@@ -204,14 +204,23 @@ def date_selection():
     else:
         start_date = request.args.get('start_date')
         fin_date = request.args.get('fin_date')
-    em_post, w_post, em_com, w_com, auth_w_d = com_words(some_id, start_date, fin_date)
-    em_post_url = com_word_graph(em_post)
-    w_post_url = com_word_graph(w_post)
-    em_com_url = com_word_graph(em_com)
-    w_com_url = com_word_graph(w_com)
-    return render_template('results.html', some_id=some_id, start_date=start_date, fin_date=fin_date, em_post=em_post,
-                           w_post=w_post, em_com=em_com, w_com=w_com, em_post_url=em_post_url, w_post_url=w_post_url,
-                           em_com_url=em_com_url, w_com_url=w_com_url)
+    em_post, w_post, em_com, w_com, auth_w_d, post_avg_like, post_weeks, com_avg_like, com_weeks = com_words(some_id,
+                                                                                                             start_date,
+                                                                                                             fin_date)
+    week_url = week_meta_graph(post_weeks, com_weeks)
+
+    em_post_url, em_post_words = com_word_graph(em_post, 'Эмоджи в постах', 'Эмоджи')
+    w_post_url, w_post_words = com_word_graph(w_post, 'Слова в постах', 'Слова')
+    em_com_url, em_com_words = com_word_graph(em_com, 'Эмоджи в комментариях', 'Эмоджи')
+    w_com_url, w_com_words = com_word_graph(w_com, 'Слова в комментариях', 'Слова')
+    auth_info = db.session.query(Authors.sex, Authors.month,
+                                 Authors.city, Authors.faculty,
+                                 Authors.home_town).filter(Authors.id.in_(auth_w_d)).all()
+    sex_dict = []
+    return render_template('results.html', some_id=some_id, start_date=start_date, fin_date=fin_date,
+                           em_post_words=em_post_words, w_post_words=w_post_words, em_com_words=em_com_words,
+                           w_com_words=w_com_words, em_post_url=em_post_url, w_post_url=w_post_url,
+                           em_com_url=em_com_url, w_com_url=w_com_url, week_url=week_url)
 
 
 def com_words(owner_id, start_date, fin_date):
@@ -221,36 +230,36 @@ def com_words(owner_id, start_date, fin_date):
                                          Posts.likes,
                                          Posts.weekday,
                                          Posts.author_id).filter(Posts.wall_owner == owner_id,
-                                                                 Posts.date >= start_date,
-                                                                 Posts.date <= fin_date).all()
+                                                                 Posts.date_time >= start_date,
+                                                                 Posts.date_time <= fin_date).all()
         to_date_coms = db.session.query(Comments.lem_text,
                                         Comments.likes,
                                         Comments.weekday,
                                         Comments.author_id).filter(Comments.wall_owner == owner_id,
-                                                                   Comments.date >= start_date,
-                                                                   Comments.date <= fin_date).all()
+                                                                   Comments.date_time >= start_date,
+                                                                   Comments.date_time <= fin_date).all()
     elif start_date != '' and fin_date == '':
         to_date_posts = db.session.query(Posts.lem_text,
                                          Posts.likes,
                                          Posts.weekday,
                                          Posts.author_id).filter(Posts.wall_owner == owner_id,
-                                                                 Posts.date >= start_date).all()
+                                                                 Posts.date_time >= start_date).all()
         to_date_coms = db.session.query(Comments.lem_text,
                                         Comments.likes,
                                         Comments.weekday,
                                         Comments.author_id).filter(Comments.wall_owner == owner_id,
-                                                                   Comments.date >= start_date).all()
+                                                                   Comments.date_time >= start_date).all()
     elif start_date == '' and fin_date != '':
         to_date_posts = db.session.query(Posts.lem_text,
                                          Posts.likes,
                                          Posts.weekday,
                                          Posts.author_id).filter(Posts.wall_owner == owner_id,
-                                                                 Posts.date <= fin_date).all()
+                                                                 Posts.date_time <= fin_date).all()
         to_date_coms = db.session.query(Comments.lem_text,
                                         Comments.likes,
                                         Comments.weekday,
                                         Comments.author_id).filter(Comments.wall_owner == owner_id,
-                                                                   Comments.date <= fin_date).all()
+                                                                   Comments.date_time <= fin_date).all()
     else:
         to_date_posts = db.session.query(Posts.lem_text,
                                          Posts.likes,
@@ -260,25 +269,65 @@ def com_words(owner_id, start_date, fin_date):
                                         Comments.likes,
                                         Comments.weekday,
                                         Comments.author_id).filter(Comments.wall_owner == owner_id).all()
-    em_post, w_post, auth_w_d = get_dicts(to_date_posts, auth_w_d)
-    em_com, w_com, auth_w_d = get_dicts(to_date_coms, auth_w_d)
-    return em_post, w_post, em_com, w_com, auth_w_d
+
+    em_post, w_post, auth_w_d, post_avg_like, post_weeks = get_dicts(to_date_posts, auth_w_d)
+    em_com, w_com, auth_w_d, com_avg_like, com_weeks = get_dicts(to_date_coms, auth_w_d)
+    return em_post, w_post, em_com, w_com, auth_w_d, post_avg_like, post_weeks, com_avg_like, com_weeks
 
 
-def com_word_graph(com_dict):
+def com_word_graph(com_dict, title, w_type):
     img = io.BytesIO()
-    new_com_dict = []
+    x = []
+    words = []
+    counts = []
     for key, value in com_dict:
-        new_com_dict.append({'word': key, 'count': value})
-    com_df = pd.DataFrame(new_com_dict)
-
-    import plotly.express as px
-    fig = px.bar(com_df, x='word', y='count',
-                 height=400)
-    img_bytes = fig.to_image(format="png")
-    graph_url = img_bytes[:20]
+        words.append(key)
+        counts.append(value)
+    num_words = len(counts)
+    for k in range(num_words):
+        x.append(k + 1)
+    plt.figure(figsize=(15, 10))
+    plt.bar(x, counts, color='purple')
+    plt.xticks(ticks=x, labels=words)
+    plt.title(title)
+    plt.ylabel('Кол-во употреблений')
+    plt.xlabel(w_type)
+    plt.savefig(img, format='png')
+    img.seek(0)
+    graph_url = base64.b64encode(img.getvalue()).decode()
     plt.close()
-    return graph_url
+    return 'data:image/png;base64,{}'.format(graph_url), words
+
+
+def week_meta_graph(post_week, com_week):
+    img = io.BytesIO()
+    whole_dict = []
+    for key in dict(post_week).keys():
+        whole_dict.append({'weekday': key, 'type': 'post', 'count': dict(post_week)[key]})
+    for key in dict(com_week).keys():
+        whole_dict.append({'weekday': key, 'type': 'comment', 'count': dict(com_week)[key]})
+    whole_db = pd.DataFrame(whole_dict)
+    plt.figure(figsize=(15, 10))
+    sns.barplot(x='weekday', y='count', hue='type', order=['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    data=whole_db, palette='Purples')
+    plt.title('День недели и кол-во записей')
+    plt.ylabel('Кол-во запсисей')
+    plt.xlabel('День недели')
+    plt.savefig(img, format='png')
+    img.seek(0)
+    graph_url = base64.b64encode(img.getvalue()).decode()
+    plt.close()
+    return 'data:image/png;base64,{}'.format(graph_url)
+
+@app.route('/back_to_form1', methods=['get'])
+def back():
+    if not request.args.get("some_id"):
+        return redirect(url_for('index'))
+    else:
+        some_id = request.args.get("some_id")
+        w = 'New date selection.'
+        return render_template('search.html', owner_id=some_id, w=w)
+
 
 if __name__ == '__main__':
     app.run(debug=False)

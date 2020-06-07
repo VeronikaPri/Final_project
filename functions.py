@@ -308,6 +308,8 @@ def search(user_type, id_type, some_id):
 
 def get_dicts(to_date_posts, auth_w_d):
     w_d = []
+    weeks = []
+    liking = []
     punkt = ['"', ',', '.', '!', '?', ':', ';', ')', '(', '...', '``', '—', '#', '..', '«', '»', '-', '*', '[', ']',
              '--']
     add_sw = ['это', 'мочь', 'делать', 'знать', 'хотеть', 'весь', 'год', 'очень', 'сказать', 'день', 'человек', 'никто',
@@ -315,7 +317,9 @@ def get_dicts(to_date_posts, auth_w_d):
     for item in to_date_posts:
         lem_text = item[0]
         likes = item[1]
+        liking.append(likes)
         weekday = item[2]
+        weeks.append(weekday)
         author_id = item[3]
         tokenized = word_tokenize(lem_text)
         auth_w_d.append(author_id)
@@ -326,11 +330,16 @@ def get_dicts(to_date_posts, auth_w_d):
                 type_ = 'word'
             if tok not in sw and tok not in punkt and tok not in add_sw:
                 w_d.append({'word': tok, 'type': type_, 'likes': likes, 'weekday': weekday})
+    avg_like = 0
+    for like in liking:
+        avg_like += int(like)
+    avg_like = round(avg_like/len(liking))
+    weeks = Counter(weeks)
     w_df = pd.DataFrame(w_d)
     em = w_df[w_df.type.isin(['emoji'])]
     w = w_df[w_df.type.isin(['word'])]
     em_d = Counter(list(em['word'])).most_common(10)
     wr_d = Counter(list(w['word'])).most_common(10)
-    return em_d, wr_d, auth_w_d
+    return em_d, wr_d, auth_w_d, avg_like, weeks
 
 
